@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import { AuthProvider as OidcProvider, useAuth } from 'react-oidc-context';
 
@@ -114,7 +114,6 @@ function LoginPage() {
 /*                               SIGNUP PAGE                                  */
 /* -------------------------------------------------------------------------- */
 function SignupPage() {
-  const auth = useAuth();
   
   return (
     <div className="app-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
