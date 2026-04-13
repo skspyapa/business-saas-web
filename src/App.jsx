@@ -98,7 +98,7 @@ function DashboardPage() {
         <div className="logo">Sky SaaS Dashboard</div>
         <div style={{ display: "flex", gap: "2rem", alignItems: "center" }}>
           <span style={{ fontWeight: 600 }}>{auth.user?.profile.given_name || auth.user?.profile.preferred_username}</span>
-          <button className="btn-logout" onClick={() => auth.removeUser()}>Sign Out</button>
+          <button className="btn-logout" onClick={() => void auth.signoutRedirect()}>Sign Out</button>
         </div>
       </nav>
 
