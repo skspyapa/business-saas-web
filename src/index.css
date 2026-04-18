@@ -73,6 +73,7 @@ body {
   letter-spacing: -0.5px;
   background: linear-gradient(to right, #fff, #888);
   -webkit-background-clip: text;
+  background-clip: text;
   color: transparent;
 }
 

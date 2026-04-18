@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
-import { AuthProvider as OidcProvider, useAuth } from 'react-oidc-context';
+import { AuthProvider as OidcProvider, useAuth, hasAuthParams } from 'react-oidc-context';
 
 import { WebStorageStateStore } from 'oidc-client-ts';
 
@@ -33,12 +33,12 @@ function LandingPage() {
     }
   }, [auth.isAuthenticated, navigate]);
 
-  // Prevent "flash" of the Landing Page when Keycloak redirects back with the login tokens
-  if (auth.isLoading || auth.activeNavigator) {
+  // Prevent "flash" of the Landing Page ONLY when KEYCLOAK redirects back
+  if (hasAuthParams()) {
     return (
       <div className="app-container animate-fade-in" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <div className="background-glow"></div>
-          <h2 style={{ color: "white", zIndex: 10 }}>Authenticating...</h2>
+        <div className="background-glow"></div>
+        <h2 style={{ color: "white", zIndex: 10 }}>Authenticating...</h2>
       </div>
     );
   }
@@ -105,51 +105,51 @@ function DashboardPage() {
 
   useEffect(() => {
     if (auth.isAuthenticated && auth.user?.access_token) {
-      
+
       // 1. FIRST: Sync the user into the local database
       fetch("http://localhost:8080/api/v1/users/sync", {
-         method: "POST",
-         headers: { "Authorization": `Bearer ${auth.user.access_token}` }
+        method: "POST",
+        headers: { "Authorization": `Bearer ${auth.user.access_token}` }
       })
-      .then(syncRes => {
-         if (!syncRes.ok) throw new Error("Failed to sync user. Status: " + syncRes.status);
-         
-         // 2. SECOND: Now fetch their businesses
-         return fetch("http://localhost:8080/api/v1/businesses/my-businesses", {
-            headers: { 
-               "Authorization": `Bearer ${auth.user.access_token}`,
-               "Content-Type": "application/json"
+        .then(syncRes => {
+          if (!syncRes.ok) throw new Error("Failed to sync user. Status: " + syncRes.status);
+
+          // 2. SECOND: Now fetch their businesses
+          return fetch("http://localhost:8080/api/v1/businesses/my-businesses", {
+            headers: {
+              "Authorization": `Bearer ${auth.user.access_token}`,
+              "Content-Type": "application/json"
             }
-         });
-      })
-      .then(res => {
-         if (!res.ok) throw new Error("Failed to fetch businesses. Status: " + res.status);
-         return res.json();
-      })
-      .then(data => {
+          });
+        })
+        .then(res => {
+          if (!res.ok) throw new Error("Failed to fetch businesses. Status: " + res.status);
+          return res.json();
+        })
+        .then(data => {
           // If it's empty, redirect to create business!
           if (!data.content || data.content.length === 0) {
-             navigate('/create-business');
+            navigate('/create-business');
           } else {
-             // Unlock Dashboard
-             setIsVerifying(false);
+            // Unlock Dashboard
+            setIsVerifying(false);
           }
-      })
-      .catch(err => {
+        })
+        .catch(err => {
           console.error("API Error Sequence:", err);
           // Don't arbitrarily open the dashboard if the API crashes (e.g. CORS error)
           // We redirect to create-business as a safe fallback or stay locked
           navigate('/create-business');
-      });
+        });
     }
   }, [auth.isAuthenticated, auth.user, navigate]);
 
   if (!auth.isAuthenticated || isVerifying) {
-     return (
-       <div className="app-container animate-fade-in" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-           <h2 style={{ color: "white" }}>Securing your workspace...</h2>
-       </div>
-     );
+    return (
+      <div className="app-container animate-fade-in" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <h2 style={{ color: "white" }}>Securing your workspace...</h2>
+      </div>
+    );
   }
 
   return (
@@ -201,13 +201,13 @@ function CreateBusinessPage() {
         businessType: formData.get("businessType")
       })
     })
-    .then(res => {
-      if(res.ok) {
-         // Success! Redirect to unlocked dashboard
-         navigate('/dashboard');
-      }
-    })
-    .catch(console.error);
+      .then(res => {
+        if (res.ok) {
+          // Success! Redirect to unlocked dashboard
+          navigate('/dashboard');
+        }
+      })
+      .catch(console.error);
   };
 
   return (
@@ -215,17 +215,17 @@ function CreateBusinessPage() {
       <div className="background-glow"></div>
       <form onSubmit={handleCreateBusiness} className="glass-card" style={{ width: '400px', display: 'flex', flexDirection: 'column', gap: '1.5rem', zIndex: 10 }}>
         <h2 style={{ textAlign: 'center', margin: 0 }}>Create Your Workspace</h2>
-        
+
         <input name="businessName" placeholder="Company Name" required style={{ padding: '1rem', borderRadius: '8px', background: 'rgba(0,0,0,0.5)', border: '1px solid #333', color: 'white', fontSize: '1rem' }} />
-        
+
         <input name="subdomain" placeholder="Subdomain (e.g. yourbrand)" required style={{ padding: '1rem', borderRadius: '8px', background: 'rgba(0,0,0,0.5)', border: '1px solid #333', color: 'white', fontSize: '1rem' }} />
-        
+
         <select name="businessType" required style={{ padding: '1rem', borderRadius: '8px', background: 'rgba(0,0,0,0.5)', border: '1px solid #333', color: 'white', fontSize: '1rem' }}>
-           <option value="RETAIL" style={{color: 'black'}}>Retail</option>
-           <option value="SOFTWARE" style={{color: 'black'}}>Software / SaaS</option>
-           <option value="AGENCY" style={{color: 'black'}}>Agency</option>
+          <option value="RETAIL" style={{ color: 'black' }}>Retail</option>
+          <option value="SOFTWARE" style={{ color: 'black' }}>Software / SaaS</option>
+          <option value="AGENCY" style={{ color: 'black' }}>Agency</option>
         </select>
-        
+
         <button type="submit" className="btn-primary" style={{ marginTop: '0.5rem', padding: '1rem' }}>Launch Business</button>
       </form>
     </div>
