@@ -7,6 +7,7 @@ export const oidcConfig = {
   response_type: "code",
   scope: "openid profile email",
   userStore: new WebStorageStateStore({ store: window.localStorage }), // Crucial for persisting logins across refreshes
+  automaticSilentRenew: true, // Automatically renew the token in the background before it expires
   onSigninCallback: () => {
     window.history.replaceState({}, document.title, window.location.pathname);
   }

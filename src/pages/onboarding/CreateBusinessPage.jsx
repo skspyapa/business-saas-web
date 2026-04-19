@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
 
 export default function CreateBusinessPage() {
   const auth = useAuth();
   const navigate = useNavigate();
+  const [sessionError, setSessionError] = useState(null);
 
   const handleCreateBusiness = (e) => {
     e.preventDefault();
@@ -24,12 +25,26 @@ export default function CreateBusinessPage() {
       })
     })
       .then(res => {
-        if (res.ok) {
-          // Success! Redirect to unlocked dashboard
-          navigate('/dashboard');
+        if (!res.ok) {
+          if (res.status === 401) {
+            throw new Error("401");
+          }
+          throw new Error("Server error occurred while creating workspace.");
         }
+        return res.json();
       })
-      .catch(console.error);
+      .then(() => {
+        // Success! Redirect to unlocked dashboard
+        navigate('/dashboard');
+      })
+      .catch(err => {
+        console.error(err);
+        if (err.message === "401") {
+          setSessionError("Your secure session has expired. Please log in again to continue.");
+        } else {
+          setSessionError("An error occurred. Please try again later.");
+        }
+      });
   };
 
   return (
@@ -37,6 +52,20 @@ export default function CreateBusinessPage() {
       <div className="background-glow"></div>
       <form onSubmit={handleCreateBusiness} className="glass-card" style={{ width: '400px', display: 'flex', flexDirection: 'column', gap: '1.5rem', zIndex: 10 }}>
         <h2 style={{ textAlign: 'center', margin: 0 }}>Create Your Workspace</h2>
+        
+        {sessionError && (
+          <div style={{ backgroundColor: 'rgba(255, 60, 60, 0.1)', border: '1px solid #ff4444', padding: '1rem', borderRadius: '8px', color: '#ff4444', textAlign: 'center', fontWeight: 'bold' }}>
+            {sessionError}
+            {sessionError.includes('expired') && (
+              <button 
+                type="button" 
+                onClick={() => void auth.signinRedirect()} 
+                style={{ marginTop: '0.8rem', background: '#ff4444', color: 'white', border: 'none', padding: '0.4rem 1rem', borderRadius: '4px', cursor: 'pointer' }}>
+                Verify Session
+              </button>
+            )}
+          </div>
+        )}
         
         <input name="businessName" placeholder="Company Name" required style={{ padding: '1rem', borderRadius: '8px', background: 'rgba(0,0,0,0.5)', border: '1px solid #333', color: 'white', fontSize: '1rem' }} />
         
