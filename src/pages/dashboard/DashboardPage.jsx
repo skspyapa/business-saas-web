@@ -16,13 +16,30 @@ export default function DashboardPage() {
   useEffect(() => {
     if (auth.isAuthenticated && auth.user?.access_token) {
 
-      // 1. FIRST: Sync the user into the local database
-      fetch("http://localhost:8080/api/v1/users/sync", {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${auth.user.access_token}` }
-      })
+      const authAction = localStorage.getItem('auth_action');
+      let userApiPromise;
+
+      if (authAction === 'signup') {
+        // Run the Creation Hook
+        userApiPromise = fetch("http://localhost:8080/api/v1/users/sync", {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${auth.user.access_token}` }
+        });
+      } else {
+        // Run the Passive Verification Hook
+        userApiPromise = fetch("http://localhost:8080/api/v1/users/me", {
+          method: "GET",
+          headers: { "Authorization": `Bearer ${auth.user.access_token}` }
+        });
+      }
+
+      // Cleanup the breadcrumb
+      localStorage.removeItem('auth_action');
+
+      // 1. FIRST: Ensure user exists safely
+      userApiPromise
         .then(syncRes => {
-          if (!syncRes.ok) throw new Error("Failed to sync user. Status: " + syncRes.status);
+          if (!syncRes.ok) throw new Error("Failed to process user context. Status: " + syncRes.status);
 
           // 2. SECOND: Now fetch their businesses
           return fetch("http://localhost:8080/api/v1/businesses/my-businesses", {

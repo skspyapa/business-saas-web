@@ -25,11 +25,13 @@ export default function LandingPage() {
   }
 
   const handleLogin = () => {
+    localStorage.setItem('auth_action', 'login');
     setIsExiting(true);
     setTimeout(() => { void auth.signinRedirect(); }, 400);
   };
 
   const handleSignup = () => {
+    localStorage.setItem('auth_action', 'signup');
     setIsExiting(true);
     setTimeout(() => { void auth.signinRedirect({ prompt: 'create', extraQueryParams: { kc_action: 'register' } }); }, 400);
   };
