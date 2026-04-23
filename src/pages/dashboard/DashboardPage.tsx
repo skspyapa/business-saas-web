@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
 
@@ -14,7 +14,8 @@ export default function DashboardPage() {
   }, [auth.isLoading, auth.isAuthenticated, navigate]);
 
   useEffect(() => {
-    if (auth.isAuthenticated && auth.user?.access_token) {
+    const token = auth.user?.access_token;
+    if (auth.isAuthenticated && token) {
 
       const authAction = localStorage.getItem('auth_action');
       let userApiPromise;
@@ -23,13 +24,13 @@ export default function DashboardPage() {
         // Run the Creation Hook
         userApiPromise = fetch("http://localhost:8080/api/v1/users/sync", {
           method: "POST",
-          headers: { "Authorization": `Bearer ${auth.user.access_token}` }
+          headers: { "Authorization": `Bearer ${token}` }
         });
       } else {
         // Run the Passive Verification Hook
         userApiPromise = fetch("http://localhost:8080/api/v1/users/me", {
           method: "GET",
-          headers: { "Authorization": `Bearer ${auth.user.access_token}` }
+          headers: { "Authorization": `Bearer ${token}` }
         });
       }
 
@@ -44,7 +45,7 @@ export default function DashboardPage() {
           // 2. SECOND: Now fetch their businesses
           return fetch("http://localhost:8080/api/v1/businesses/my-businesses", {
             headers: {
-              "Authorization": `Bearer ${auth.user.access_token}`,
+              "Authorization": `Bearer ${token}`,
               "Content-Type": "application/json"
             }
           });

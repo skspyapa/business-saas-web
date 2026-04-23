@@ -1,21 +1,27 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
 
 export default function CreateBusinessPage() {
   const auth = useAuth();
   const navigate = useNavigate();
-  const [sessionError, setSessionError] = useState(null);
+  const [sessionError, setSessionError] = useState<string | null>(null);
 
-  const handleCreateBusiness = (e) => {
+  const handleCreateBusiness = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.target);
+    const formData = new FormData(e.currentTarget);
+    const token = auth.user?.access_token;
+
+    if (!token) {
+        setSessionError("Authentication token is missing. Please log in again.");
+        return;
+    }
 
     // Call the Spring Boot backend
     fetch("http://localhost:8080/api/v1/businesses", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${auth.user?.access_token}`,
+        "Authorization": `Bearer ${token}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
@@ -37,7 +43,7 @@ export default function CreateBusinessPage() {
         // Success! Redirect to unlocked dashboard
         navigate('/dashboard');
       })
-      .catch(err => {
+      .catch((err: Error) => {
         console.error(err);
         if (err.message === "401") {
           setSessionError("Your secure session has expired. Please log in again to continue.");
